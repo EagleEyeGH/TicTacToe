@@ -24,6 +24,12 @@ instance Show Vak where
   show (Bezet O) = "O"
   show Leeg = " "
 
+instance Eq Vak where
+  Bezet X == Bezet X = True
+  Bezet O == Bezet O = True
+  Leeg == Leeg = True
+  _ == _ = False
+
 maakRij :: [Vak] -> String
 maakRij rij = intercalate " | " $ fmap show rij
 
@@ -35,7 +41,7 @@ maakBord bord = do
   putStrLn "----------"
   putStrLn $ maakRij derdeRij
   where eersteRij  = take 3 bord
-        tweedeRij = drop 3 . take 6 $ bord --drops 3 elementen, daarna pakt het de eerste 6 elementen zonder de eerste 3 dus de middelste rij
+        tweedeRij = drop 3 . take 6 $ bord --drops 3 elementen, daarna pakt het de eerste 6 elementen zonder de eerste 3 dus de middelste rij 
         derdeRij  = drop 6 bord
 
 --returns list index op basis van A1 - C3
@@ -52,7 +58,7 @@ getBordNummer "C3" = Just 8
 getBordNummer _    = Nothing
 
 
-data VakTransform = Success [Vak] | Fail String [Vak]
+data WisselVak = Success [Vak] | Fail String [Vak]
 
 --controleerd of list item (bord) op index (nummer) leeg is
 isVakLeeg ::  [Vak] -> Int -> Maybe Int
@@ -65,19 +71,13 @@ isVakLeeg bord nummer = if bord !! nummer == Leeg then Just nummer else Nothing
 --drop 2 + 1 [3 4 5 6 7 8]
 --alles samen [0 1 X 3 4 5 6 7 8]
 --nothing en just horen bij de maybe monad. Dit wordt gebruikt voor errors
--- >>= of monadic bind kan gezien worden als then in promises van javascript: eerst gerbordnummer then isvakleeg. 
-  --als er in 1 van deze maybe functies nothing terug komt, stopt dit de pipe van functies en zal Fail, error n bord returned worden
-setVak :: String -> Zet -> [Vak] -> VakTransform
+-- >>= of monadic bind kan gezien worden als then in promises van javascript: eerst getbordnummer then isvakleeg. 
+  --als er in 1 van deze maybe functies nothing terug komt, stopt dit de pipe van functies en zal Fail, error en bord returned worden
+setVak :: String -> Zet -> [Vak] -> WisselVak
 setVak vaknummer zet bord =
   case getBordNummer vaknummer >>= isVakLeeg bord of
     Nothing -> Fail "ongeldige zet" bord
     Just i -> Success ((take i bord) ++ [Bezet zet] ++ (drop (i+1) bord))
-
-instance Eq Vak where
-  Bezet X == Bezet X = True
-  Bezet O == Bezet O = True
-  Leeg == Leeg = True
-  _ == _ = False
 
 --speel een ronde , print de lines voor het kiezen van een vak
 --controleerd daarna met een case van setvak wat Fail of Success terug geeft
